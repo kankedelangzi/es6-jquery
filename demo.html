@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+     <script src="https://cdn.bootcss.com/babel-standalone/6.22.1/babel.min.js"></script>
+     <script src="./es6-jquery.js"></script>
+     <style>
+        div{
+            width: 100px;
+            height: 100px;
+            background: grey;
+        }
+     </style>
+</head>
+<body>
+    <div></div>
+    <br>
+    <div></div>
+</body>
+<script type="text/javascript">
+        $('div')[0].style.background = 'red';
+        alert( $('div').length );
+</script>
+</html>
