@@ -8,9 +8,29 @@
     <script src="./jquery.js"></script>
 </head>
 <body>
-
+    <div>1</div>
+    <div>2</div>
+    <div>3</div>
 </body>
 <script>
-    console.log($())
+    //console.log($("div").eq(1).css({color: "red"}).prevObject.css("background-color","blue"));
+    // var oDiv = document.getElementsByTagName("div");
+    // $.each(oDiv,function(index,item){
+    //     if(item.innerHTML == 2) return false;
+    //     item.innerHTML = item.innerHTML + 1;
+    // })
+    // oDiv = [].slice.call(oDiv);
+    // oDiv.forEach(function(item){
+    //         return;
+    //         item.innerHTML = item.innerHTML + 1;
+    // });
+    //$("div").eq(0).css("background","red");
+    $("div").map(function(index,item){
+
+        return index;
+    }).each(function(index, item){
+        console.log(item);
+    }).end().css("color","blue");
+
 </script>
 </html>

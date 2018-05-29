@@ -11,7 +11,8 @@
  *
  * Date: Tue Nov 13 2012 08:20:33 GMT-0500 (Eastern Standard Time)
  */
-(function( window, undefined ) {
+(function( window, undefined ) { // 将window对象当做参数传入  这样速度比较快  // undefined不是关键字，可以人为修改之，为了防止之前被修改，
+	// 这里传入保证其正确性
 var
 	// A central reference to the root jQuery(document)
 	rootjQuery,
@@ -25,10 +26,10 @@ var
 	navigator = window.navigator,
 
 	// Map over jQuery in case of overwrite
-	_jQuery = window.jQuery,
-
+	_jQuery = window.jQuery,// 保存在引入jquery之前定义在window上边的jQuery
+	/* 也就是说在引入jquery之后之前定义的jquery和$就要用_jQuery和_$来使用了*/
 	// Map over the $ in case of overwrite
-	_$ = window.$,
+	_$ = window.$,// 保存在引入jquery之前定义在window上边的$
 
 	// Save a reference to some core methods
 	core_push = Array.prototype.push,
@@ -37,17 +38,26 @@ var
 	core_toString = Object.prototype.toString,
 	core_hasOwn = Object.prototype.hasOwnProperty,
 	core_trim = String.prototype.trim,
-
-	// Define a local copy of jQuery
+	/**
+	 * //window.jQuery = window.$ = jQuery;  这里要思考 $('#id') 为什么可以这样使用  以及   为什么可以  $('#id').css()
+ 	   首先$ 本身是一个函数 所以要$() 这样使用   另外这个函数返回了一个对象  所以可以 $('#id').css() 这样使用   而且返回的对象中
+ 	    拥有全部的jquery方法  请思考之
+	 * @param  {[type]} selector [选择器 ]
+	 * @param  {[type]} context  [执行上下文]
+	 * @return {[type]}          [返回一个对象]
+	 */
 	jQuery = function( selector, context ) {
-		// The jQuery object is actually just the init constructor 'enhanced'
+		// 这里一开始并不理解jQuery.fn.init   我觉得可以这样理解  首先  这是一个构造函数 --->因为可以使用new调用 另外它上边
+		// 挂载了所有的jquery的api中的方法  换句话说这个函数才是真正的jquery  而 jQuery = function( selector, context )这个
+		// 函数只是一个入口函数，其作用就是用来创建一个jQuery.fn.init对象  如果不理解这里的jQuery.fn.init可以把它看做是另一个函数
+		// 比如名字就叫  Query   Aaa都不会有影响
 		return new jQuery.fn.init( selector, context, rootjQuery );
 	},
 
-	// Used for matching numbers
+	// Used for matching numbers数字
 	core_pnum = /[\-+]?(?:\d*\.|)\d+(?:[eE][\-+]?\d+|)/.source,
 
-	// Used for detecting and trimming whitespace
+	// Used for detecting and trimming whitespace 去空格
 	core_rnotwhite = /\S/,
 	core_rspace = /\s+/,
 
@@ -93,29 +103,41 @@ var
 	class2type = {};
 
 jQuery.fn = jQuery.prototype = {
+	// 这里将jquery这个构造函数赋值给constructor  注意这里是一个函数不是字符串
 	constructor: jQuery,
+	/**
+	 * jQuery的初始化函数 ，每次new一个jQuery的时候都会调用这个函数
+	 * @param  {[type]} selector   [选择器]
+	 * @param  {[type]} context    [执行上下文]
+	 * @param  {[type]} rootjQuery [document元素]
+	 * @return {[type]}            [description]
+	 */
 	init: function( selector, context, rootjQuery ) {
 		var match, elem, ret, doc;
 
-		// Handle $(""), $(null), $(undefined), $(false)
+		// 处理 $(""), $(null), $(undefined), $(false)
 		if ( !selector ) {
 			return this;
 		}
 
-		// Handle $(DOMElement)
+		// 处理 $(DOMElement)  处理本身就是传入的一个节点的情况
 		if ( selector.nodeType ) {
 			this.context = this[0] = selector;
 			this.length = 1;
 			return this;
 		}
 
-		// Handle HTML strings
+		// 处理字符串
 		if ( typeof selector === "string" ) {
+			// 如果传入的是一个标签
 			if ( selector.charAt(0) === "<" && selector.charAt( selector.length - 1 ) === ">" && selector.length >= 3 ) {
 				// Assume that strings that start and end with <> are HTML and skip the regex check
 				match = [ null, selector, null ];
 
 			} else {
+				// 如果传入的不是一个标签那就要做正则匹配了
+				// Prioritize #id over <tag> to avoid XSS via location.hash (#9521)
+				// rquickExpr = /^(?:[^#<]*(<[\w\W]+>)[^>]*$|#([\w\-]*)$)/,
 				match = rquickExpr.exec( selector );
 			}
 
@@ -137,6 +159,7 @@ jQuery.fn = jQuery.prototype = {
 
 				// HANDLE: $(#id)
 				} else {
+					//处理id的情况
 					elem = document.getElementById( match[2] );
 
 					// Check parentNode to catch when Blackberry 4.6 returns
@@ -149,12 +172,14 @@ jQuery.fn = jQuery.prototype = {
 						}
 
 						// Otherwise, we inject the element directly into the jQuery object
+						// 选取节点结束后将其赋值给jQuery对象 并且添加对应个数的length属性
 						this.length = 1;
 						this[0] = elem;
 					}
 
 					this.context = document;
 					this.selector = selector;
+					// 执行结束后返回this对象这就是为什么jquery对象可以进行链式操作的原理
 					return this;
 				}
 
@@ -174,7 +199,7 @@ jQuery.fn = jQuery.prototype = {
 			return rootjQuery.ready( selector );
 		}
 
-		if ( selector.selector !== undefined ) {
+		if ( selector.selector !== undefined ) {// 如果传入的selector具有selector属性说明这个是一个jQuery对象那么就要向外一层
 			this.selector = selector.selector;
 			this.context = selector.context;
 		}
@@ -186,16 +211,17 @@ jQuery.fn = jQuery.prototype = {
 	selector: "",
 
 	// The current version of jQuery being used
+	// 当前版本号  可以用来检测jquery对象
 	jquery: "1.8.3",
 
-	// The default length of a jQuery object is 0
+	// 下边的length 和size一起注解  可见length是一个属性   size是一个方法 但是得到的都是当前所选元素的个数
 	length: 0,
 
 	// The number of elements contained in the matched element set
 	size: function() {
 		return this.length;
 	},
-
+	// 将伪数组转成真正的数组
 	toArray: function() {
 		return core_slice.call( this );
 	},
@@ -205,18 +231,34 @@ jQuery.fn = jQuery.prototype = {
 	get: function( num ) {
 		return num == null ?
 
-			// Return a 'clean' array
+			// 如果使用get未传入num那么返回一个纯数组  这个数组的每一项是选区得到的元素
 			this.toArray() :
 
-			// Return just the object
+			// 如果传入的是负值那就按照倒叙返回   如果传入正值就返回当前集合中的num下标对应的个元素
 			( num < 0 ? this[ this.length + num ] : this[ num ] );
 	},
 
 	// Take an array of elements and push it onto the stack
 	// (returning the new matched element set)
+	/**
+	 * 经典！！！
+	 * 将当前的jquery挂载到   ret  的prevObject 属性上去
+	 * 然后用ret替代当前的对象   那么ret中的一切属性都是新的
+	 * 举个不恰当的例子   比如一个人离婚了要再婚  那么   前妻就会是 prevObject   现任的将是按照新的规则选取的
+	 * 那么所有   妻子  属性都是 现任的属性    如果要访问前任的属性那么就要调用  prevObject 去查找
+	 *
+	 * jQuery这样做是因为  比如$("#id").methods1().methods2().methods3()   如果methods2的操作对象不是这个id对象而是其子元素
+	 * 那么就可以利用下边这个方法将当前的对象压栈 然后到了methods3对象要针对id这个元素操作了就可以出栈然后继续链式操作
+	 * @param  {[type]} elems    [新集合的元素]
+	 * @param  {[type]} name     [操作的名字]
+	 * @param  {[type]} selector [操作选用的父集合]
+	 * @return {[type]}          [新集合对象]
+	 */
 	pushStack: function( elems, name, selector ) {
 
 		// Build a new jQuery matched element set
+		// this.constructor() === $()  创建一个空的jquery对象 然后将elems与此merge到一起
+		// 为什么这样做呢？ 看到merge代码再研究--------？？？？？？？
 		var ret = jQuery.merge( this.constructor(), elems );
 
 		// Add the old object onto the stack (as a reference)
@@ -237,43 +279,72 @@ jQuery.fn = jQuery.prototype = {
 	// Execute a callback for every element in the matched set.
 	// (You can seed the arguments with an array of args, but this is
 	// only used internally.)
+	/**
+	 * 遍历操作   其实是调用了静态方法each 具体细节到静态方法中解释
+	 * @param  {Function} callback [description]
+	 * @param  {[type]}   args     [description]
+	 * @return {[type]}            [description]
+	 */
 	each: function( callback, args ) {
 		return jQuery.each( this, callback, args );
 	},
-
+	/**
+	 * 加载操作   详细见静态方法
+	 * @param  {Function} fn [回调函数]
+	 * @return {[type]}      [description]
+	 */
 	ready: function( fn ) {
 		// Add the callback
+		// 实际调用是jQuery.ready.promise
 		jQuery.ready.promise().done( fn );
 
 		return this;
 	},
-
+	/**
+	 * 选取  当前集合中的第几个  返回jquery对象这一点注意和get进行对比  另外其设计也是很巧妙
+	 * @param  {[type]} i [description]
+	 * @return {[type]}   [description]
+	 */
 	eq: function( i ) {
-		i = +i;
+		i = +i;// 防止传入字符串的数字
 		return i === -1 ?
 			this.slice( i ) :
 			this.slice( i, i + 1 );
 	},
-
+	/**
+	 * 下边两个方法分别针对第一个和最后一个   当然这里返回的是jquery对象  平时的项目中经常会针对第一个和最后一个做一些特殊的操作
+	 * @return {[type]} [description]
+	 */
 	first: function() {
-		return this.eq( 0 );
+		return this.eq( 0 );// 注意这里并不也是压栈
 	},
 
 	last: function() {
-		return this.eq( -1 );
+		return this.eq( -1 );// 注意这里并不也是压栈
 	},
-
+	/**
+	 * jquery的slice方法 这里用到了pushStack这个函数  处理的问题比较简单，但是对于学习使用pushStatc这个方法很有意义
+	 * 可以进行深入研究
+	 * @return {[type]} [description]
+	 */
 	slice: function() {
+		// 第一个实参是截取到的所有的元素   第二个是操作名称slice  第三个是 选择的区间  比如选择第一个元素  就是"0,1"
 		return this.pushStack( core_slice.apply( this, arguments ),
 			"slice", core_slice.call(arguments).join(",") );
 	},
-
+	/**
+	 * 类似于slice   仿照数组的map方法 但是用到了pushStack这个函数用来管理之前的集合
+	 * @param  {Function} callback [description]
+	 * @return {[type]}            [description]
+	 */
 	map: function( callback ) {
+		//jquery.map  静态方法是一个类似原生map的方法   负责返回符合要求的数组
+
 		return this.pushStack( jQuery.map(this, function( elem, i ) {
 			return callback.call( elem, i, elem );
 		}));
 	},
-
+	// 出栈方法与pushStack方法配合使用
 	end: function() {
 		return this.prevObject || this.constructor(null);
 	},
@@ -286,21 +357,45 @@ jQuery.fn = jQuery.prototype = {
 };
 
 // Give the init function the jQuery prototype for later instantiation
+/**
+ * 这个赋值操作可以这样理解   与jQuery的构造函数对应     我们知道jQuery的真身其实是  jQuery.fn.init 也就是$()  这样返回的其实是一个
+ * jQuery.fn.init实例  但是我们从下文可以看到  所有的实例方法其实都挂载到了 jQuery.fn= jQuery.prototype上边了  那么这样的话也就是
+ * 我们的$() 是不可以使用类似  css  html这种方法的  为了能确保这些方法的使用那么我们将 jQuery.fn.init 的原型继承 jQuery.fn 就可以
+ * 了
+ * @type {[type]}
+ */
 jQuery.fn.init.prototype = jQuery.fn;
 
+/**
+ * jquery非常核心的一个函数   这也是jQuery对外的一个插槽 之所以可以在Jquery上扩展各种插件都是这个函数的功劳
+ * jquery的扩展函数
+ * @return {[type]} [description]
+ */
 jQuery.extend = jQuery.fn.extend = function() {
 	var options, name, src, copy, copyIsArray, clone,
-		target = arguments[0] || {},
-		i = 1,
-		length = arguments.length,
-		deep = false;
+		target = arguments[0] || {},// target被扩展的对象默认是第一个参数  $.extend({},{name:111});或者是一个空对象
+		i = 1,// 指针
+		length = arguments.length,// 参数长度
+		deep = false;// 是否要深拷贝
 
-	// Handle a deep copy situation
+	/*
+		处理深拷贝的情况 $.extend(true,{},{
+									arr:["1","2","4"],
+									person:{
+										name: "JQ"
+										children:[
+											{
+											name: "Leo"
+										}
+										]
+									}
+							})
+	 */
 	if ( typeof target === "boolean" ) {
 		deep = target;
-		target = arguments[1] || {};
+		target = arguments[1] || {};// target指向要拷贝的对象
 		// skip the boolean and the target
-		i = 2;
+		i = 2;// 指针后移
 	}
 
 	// Handle case when target is a string or something (possible in deep copy)
@@ -309,39 +404,92 @@ jQuery.extend = jQuery.fn.extend = function() {
 	}
 
 	// extend jQuery itself if only one argument is passed
+	/*
+		如果传入的是一个参数那么说明是将这个对象扩展到Jquery上
+		所以讲目标对象定义为this
+		$.extend({
+			css: function(){}
+		});
+	 */
 	if ( length === i ) {
 		target = this;
-		--i;
+		--i;//指针后移一个
 	}
+	/*
+
+	    obj1 = {
+			o : {
+				"a": "123",
+				"b": [1,2,3],
+				"c": { "name" : "Yuu"}
+			},
+			r : [1,2,34,5],
+
+			p : 222
+
+		}
+
+		obj2 = {
+			o : {
+				"a": "321",  // a与前边对象不同
+				"b": [1,2,3,4], //  个数不同
+				"c": { "name" : "Lii"} // name 的值是不同的
+			},
+			r : [1,3,34,5], // 第二项值不一样
+
+			p : 222 // 与前边一样
+
+			q : true // 比前边多一个值
+		}
+		$.extend(true,obj1, obj2);
+	 */
+
+
 
 	for ( ; i < length; i++ ) {
 		// Only deal with non-null/undefined values
 		if ( (options = arguments[ i ]) != null ) {
 			// Extend the base object
 			for ( name in options ) {
+				// 注意这里都是对象的引用  整个拷贝过程都是通过引用传值的，所以最终target才会改变
+				// 类似于传指针
+				// 比如上边 obj1 中 的 o 这个属性    与 obj2 中的 o这个属性
+				// 这时 src是   obj1.o    copy   是obj2.o   都是引用 ！！！
 				src = target[ name ];
 				copy = options[ name ];
 
 				// Prevent never-ending loop
+				// 如果拷贝的是自己。。。这样会死循环，过滤掉这种情况
 				if ( target === copy ) {
 					continue;
 				}
 
 				// Recurse if we're merging plain objects or arrays
+				// 如果是深拷贝并且 copy是存在的  且是纯对象或者数组就要递归逐级拷贝
 				if ( deep && copy && ( jQuery.isPlainObject(copy) || (copyIsArray = jQuery.isArray(copy)) ) ) {
-					if ( copyIsArray ) {
+      				/*------------------------处理src-------------------------------*/
+					if ( copyIsArray ) {// copyIsArray 数组
 						copyIsArray = false;
 						clone = src && jQuery.isArray(src) ? src : [];
 
-					} else {
+					} else {// 对象
 						clone = src && jQuery.isPlainObject(src) ? src : {};
 					}
-
+					/*------------------------处理src  \ end-------------------------------*/
 					// Never move original objects, clone them
+					// 下边的clone和copy都是引用
+					// 通过递归进行深拷贝
 					target[ name ] = jQuery.extend( deep, clone, copy );
 
 				// Don't bring in undefined values
+				// 如果不满足if那直接进行赋值
+				/*
+					1 非深拷贝  或 2 src与copy都是普通值不是object类型
+				 */
 				} else if ( copy !== undefined ) {
+					// 简单粗暴地直接赋值 代表着后边的必然要覆盖前边的 或者前边没有这个属性的对此进行添加
+					// 比如obj2 中 的p 与 q属性
+					// 或者o属性中内层的基本属性
 					target[ name ] = copy;
 				}
 			}
@@ -351,8 +499,16 @@ jQuery.extend = jQuery.fn.extend = function() {
 	// Return the modified object
 	return target;
 };
-
+/**
+ * 向jquery上扩展方法   另外这个地方实际extend传一个参数的使用案例可以思考之
+ * @type {[type]}
+ */
 jQuery.extend({
+	/**
+	 * 防冲突设置  将$ 和 jQuery这两个名字  放弃
+	 * @param  {[type]} deep [是否放弃jQuery]
+	 * @return {[type]}      [返回jQuery对象这意味着要重新为jQuery起一个名字]
+	 */
 	noConflict: function( deep ) {
 		if ( window.$ === jQuery ) {
 			window.$ = _$;
@@ -576,14 +732,21 @@ jQuery.extend({
 		return elem.nodeName && elem.nodeName.toLowerCase() === name.toLowerCase();
 	},
 
+	/**
+	 * each方法
+	 *
+	 * @param  {[type]}   obj      [遍历的数组或者对象]
+	 * @param  {Function} callback [回调函数]
+	 * @param  {[type]}   args     [内部使用的参数---后续研究]
+	 * @return {[type]}            [description]
+	 */
 	// args is for internal usage only
 	each: function( obj, callback, args ) {
 		var name,
-			i = 0,
-			length = obj.length,
+			i = 0,// 位置指针
+			length = obj.length,// 数组长度 如果是对象则为undefined
 			isObj = length === undefined || jQuery.isFunction( obj );
-
-		if ( args ) {
+		if ( args ) {// 内部。后续研究
 			if ( isObj ) {
 				for ( name in obj ) {
 					if ( callback.apply( obj[ name ], args ) === false ) {
@@ -600,14 +763,20 @@ jQuery.extend({
 
 		// A special, fast, case for the most common use of each
 		} else {
-			if ( isObj ) {
+			if ( isObj ) {// 对象
 				for ( name in obj ) {
+					// 请注意这个if判断 这里是支持break跳出遍历的，条件是callback返回false
 					if ( callback.call( obj[ name ], name, obj[ name ] ) === false ) {
 						break;
 					}
 				}
 			} else {
 				for ( ; i < length; ) {
+					// 请注意这个if判断 这里是支持break跳出遍历的，条件是callback返回false
+					// 原生的foreach循环是不支持跳出的 在forEach里用break会报错
+					// 在forEach中使用return会阻断return后边的代码,但是迭代会继续执行
+					// 请注意   i   与  obj[i]  的位置    这与原生的方法顺序是相反的   不知道为何它要这样做，还是这个方法实现的比原生要早呢？
+					// 为记忆增加了难度    --------！！！！！  jquery中很多这样的；
 					if ( callback.call( obj[ i ], i, obj[ i++ ] ) === false ) {
 						break;
 					}
@@ -619,6 +788,7 @@ jQuery.extend({
 	},
 
 	// Use native String.trim function wherever possible
+	//
 	trim: core_trim && !core_trim.call("\uFEFF\xA0") ?
 		function( text ) {
 			return text == null ?
@@ -838,11 +1008,15 @@ jQuery.extend({
 		return ( new Date() ).getTime();
 	}
 });
-
+/**
+ * 浏览器加载异步函数
+ * @param  {[type]} obj [description]
+ * @return {[type]}     [description]
+ */
 jQuery.ready.promise = function( obj ) {
 	if ( !readyList ) {
 
-		readyList = jQuery.Deferred();
+		readyList = jQuery.Deferred();// 创建deffer对象
 
 		// Catch cases where $(document).ready() is called after the browser event has already occurred.
 		// we once tried to use readyState "interactive" here, but it caused issues like the one
