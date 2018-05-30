@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,30 +8,61 @@
     <title>Document</title>
     <script src="./jquery.js"></script>
 </head>
+
 <body>
-    <div>1</div>
+    <!-- <div>1</div>
     <div>2</div>
-    <div>3</div>
+    <div>3</div> -->
+    <p></p>
+    <button>点</button>
 </body>
 <script>
-    //console.log($("div").eq(1).css({color: "red"}).prevObject.css("background-color","blue"));
-    // var oDiv = document.getElementsByTagName("div");
-    // $.each(oDiv,function(index,item){
-    //     if(item.innerHTML == 2) return false;
-    //     item.innerHTML = item.innerHTML + 1;
-    // })
-    // oDiv = [].slice.call(oDiv);
-    // oDiv.forEach(function(item){
-    //         return;
-    //         item.innerHTML = item.innerHTML + 1;
-    // });
-    //$("div").eq(0).css("background","red");
-    $("div").map(function(index,item){
+    // function aa(){
+    //     console.log("aa");
+    // }
+    // function bb(){
+    //     console.log("bb");
+    // }
+    // var ca = $.Callbacks("once");
+    // console.log(ca);
+    // //ca.add(aa);
+    // //ca.add(bb);
+    // ca.add([aa,bb])
+    // ca.fire("aa");
+    /* 3 functions to call when the Deferred object is resolved */
+    function fn1() {
+        $("p").append(" 1 ");
+    }
 
-        return index;
-    }).each(function(index, item){
-        console.log(item);
-    }).end().css("color","blue");
+    function fn2() {
+        $("p").append(" 2 ");
+    }
 
+    function fn3(n) {
+        $("p").append(n + " 3 " + n);
+    }
+
+    /* create a deferred object */
+    var dfd = $.Deferred();
+    var c = 0;
+    /* add handlers to be called when dfd is resolved */
+    dfd
+        /* .done() can take any number of functions or arrays of functions */
+        .done(fn1)
+        .fail(fn2)
+        /* we can chain done methods, too */
+        // .done(function(n) {
+        //     $("p").append(n + " we're done.");
+        // });
+
+    /* resolve the Deferred object when the button is clicked */
+    $("button").bind("click", function() {
+
+        if(!c) dfd.resolve("and");
+        else dfd.reject("and");
+        c++;
+
+    });
 </script>
+
 </html>

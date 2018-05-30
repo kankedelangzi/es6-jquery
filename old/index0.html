@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src="./jquery.js"></script>
+</head>
+
+<body>
+    <!-- <div>1</div>
+    <div>2</div>
+    <div>3</div> -->
+    <p id="element">123</p>
+    <button>点</button>
+</body>
+<script>
+    var $body = $("p");
+    // $body.data("aaa","123");
+    // $body.click(function  () {
+    //     alert(2233);
+    // })
+    // $("button").data("bbb", 456);
+    // $("body").data("ccc",789);
+    //
+    // console.log($body[0][$.expando]);
+
+    $body.css("position","absolute").animate({top:300,left:100},1000);
+    
+</script>
+
+</html>

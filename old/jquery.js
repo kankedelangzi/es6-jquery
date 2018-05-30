@@ -100,6 +100,7 @@ var
 	},
 
 	// [[Class]] -> type pairs
+	// 存放各种数据类型
 	class2type = {};
 
 jQuery.fn = jQuery.prototype = {
@@ -522,6 +523,7 @@ jQuery.extend({
 	},
 
 	// Is the DOM ready to be used? Set to true once it occurs.
+	// dom是否加载完毕的标志字段
 	isReady: false,
 
 	// A counter to track how many items to wait for before
@@ -529,6 +531,7 @@ jQuery.extend({
 	readyWait: 1,
 
 	// Hold (or release) the ready event
+	// 阻止加载事件
 	holdReady: function( hold ) {
 		if ( hold ) {
 			jQuery.readyWait++;
@@ -567,6 +570,10 @@ jQuery.extend({
 		}
 	},
 
+
+
+/******************************类型判断**************************************/
+
 	// See test/unit/core.js for details concerning isFunction.
 	// Since version 1.3, DOM methods and functions like alert
 	// aren't supported. They return false on IE (#2968).
@@ -587,11 +594,11 @@ jQuery.extend({
 	},
 
 	type: function( obj ) {
-		return obj == null ?
+		return obj == null ? // null类型 undefined类型 false类型
 			String( obj ) :
 			class2type[ core_toString.call(obj) ] || "object";
 	},
-
+	// 纯对象。。。
 	isPlainObject: function( obj ) {
 		// Must be an Object.
 		// Because of IE, we also have to check the presence of the constructor property.
@@ -620,8 +627,8 @@ jQuery.extend({
 
 		return key === undefined || core_hasOwn.call( obj, key );
 	},
-
-	isEmptyObject: function( obj ) {
+ /*************************************类型判断end********************************************/
+	isEmptyObject: function( obj ) {// 空对象
 		var name;
 		for ( name in obj ) {
 			return false;
@@ -1083,7 +1090,9 @@ var optionsCache = {};
 
 // Convert String-formatted options into Object-formatted ones and store in cache
 function createOptions( options ) {
+	// object是对optionsCache[ options ] 的一个引用 所以操作object就是操作后者
 	var object = optionsCache[ options ] = {};
+	// 注意里边的下划线参数，其实就是一个占位符 没用到！！！
 	jQuery.each( options.split( core_rspace ), function( _, flag ) {
 		object[ flag ] = true;
 	});
@@ -1112,28 +1121,33 @@ function createOptions( options ) {
  *	stopOnFalse:	interrupt callings when a callback returns false
  *
  */
+/*
+	这里没有通过原型而是通过闭包来实现的，所以不需要new关键字调用函数
+ */
 jQuery.Callbacks = function( options ) {
 
+/******************************静态数据和方法****************************************************/
 	// Convert options from String-formatted to Object-formatted if needed
 	// (we check in cache first)
 	options = typeof options === "string" ?
-		( optionsCache[ options ] || createOptions( options ) ) :
+		( optionsCache[ options ] || createOptions( options ) ) : // 这里的或关系是先从optionsCache这个对象中获取看是否已经存在这种配置
+		// 如果已经用过那么就不必再调用后边的函数
 		jQuery.extend( {}, options );
 
 	var // Last fire value (for non-forgettable lists)
-		memory,
+		memory, //多功能
 		// Flag to know if list was already fired
 		fired,
 		// Flag to know if list is currently firing
-		firing,
+		firing, // 是否正在执行
 		// First callback to fire (used internally by add and fireWith)
-		firingStart,
+		firingStart,// 执行回调的开始位置
 		// End of the loop when firing
-		firingLength,
+		firingLength,// 回调函数列表长度
 		// Index of currently firing callback (modified by remove if needed)
-		firingIndex,
+		firingIndex, // 当前正在执行的回调函数的下标
 		// Actual callback list
-		list = [],
+		list = [],// 存放回调函数列表
 		// Stack of fire calls for repeatable lists
 		stack = !options.once && [],
 		// Fire callbacks
@@ -1163,12 +1177,14 @@ jQuery.Callbacks = function( options ) {
 				}
 			}
 		},
+/******************静态数据和方法 共享(self中的方法都是通过操作这些数据实现关联的比如add与remove都是操作list)！**************/
 		// Actual Callbacks object
 		self = {
 			// Add a callback or a collection of callbacks to the list
 			add: function() {
-				if ( list ) {
+				if ( list ) {// list默认值为[]   [] 转为布尔值时是真
 					// First, we save the current length
+					// 存储添加新方法之前的数组长度
 					var start = list.length;
 					(function add( args ) {
 						jQuery.each( args, function( _, arg ) {
@@ -1179,6 +1195,7 @@ jQuery.Callbacks = function( options ) {
 								}
 							} else if ( arg && arg.length && type !== "string" ) {
 								// Inspect recursively
+								// ca.add([aa,bb]) 递归调用支持
 								add( arg );
 							}
 						});
@@ -1186,10 +1203,12 @@ jQuery.Callbacks = function( options ) {
 					// Do we need to add the callbacks to the
 					// current firing batch?
 					if ( firing ) {
+						// 正在执行fire时 手动修正回调队列的长度
 						firingLength = list.length;
 					// With memory, if we're not firing then
 					// we should call right away
 					} else if ( memory ) {
+						// 如果是记忆模式那么将开始的位置提前到此
 						firingStart = start;
 						fire( memory );
 					}
@@ -1204,11 +1223,11 @@ jQuery.Callbacks = function( options ) {
 						while( ( index = jQuery.inArray( arg, list, index ) ) > -1 ) {
 							list.splice( index, 1 );
 							// Handle firing indexes
-							if ( firing ) {
-								if ( index <= firingLength ) {
+							if ( firing ) { // 如果正在fire执行中
+								if ( index <= firingLength ) {// 删除的函数在数组范围内
 									firingLength--;
 								}
-								if ( index <= firingIndex ) {
+								if ( index <= firingIndex ) { // 删除的函数已经执行过了
 									firingIndex--;
 								}
 							}
@@ -1255,12 +1274,14 @@ jQuery.Callbacks = function( options ) {
 					if ( firing ) {
 						stack.push( args );
 					} else {
+						// 调用内部工具函数fire
 						fire( args );
 					}
 				}
 				return this;
 			},
 			// Call all the callbacks with the given arguments
+			// 这是对外api 实例方法 其实是调用fireWith方法m
 			fire: function() {
 				self.fireWith( this, arguments );
 				return this;
@@ -1276,18 +1297,31 @@ jQuery.Callbacks = function( options ) {
 jQuery.extend({
 
 	Deferred: function( func ) {
+		//定义几个变量  tuples    state     promise   deferred
 		var tuples = [
 				// action, add listener, listener list, final state
-				[ "resolve", "done", jQuery.Callbacks("once memory"), "resolved" ],
-				[ "reject", "fail", jQuery.Callbacks("once memory"), "rejected" ],
-				[ "notify", "progress", jQuery.Callbacks("memory") ]
+				[ "resolve", "done", jQuery.Callbacks("once memory"), "resolved" ],// 成功
+				[ "reject", "fail", jQuery.Callbacks("once memory"), "rejected" ],// 失败
+				[ "notify", "progress", jQuery.Callbacks("memory") ]// 消息
 			],
-			state = "pending",
+			state = "pending",// 将初始状态置为进行中
+
+
+/**********************************************promise*************************************************************************/
+			/*
+				promise = {
+					state: function (){},
+					always: function (){},
+					then: function(){},
+					promise: function(){}
+				}
+			 */
 			promise = {
-				state: function() {
+				state: function() {// 返回当前状态
 					return state;
 				},
-				always: function() {
+				always: function() {// 不管成功失败总是执行
+					// deferred 这是下边的deferred
 					deferred.done( arguments ).fail( arguments );
 					return this;
 				},
@@ -1318,21 +1352,43 @@ jQuery.extend({
 				},
 				// Get a promise for this deferred
 				// If obj is provided, the promise aspect is added to the object
+				// 此方法将promise扩展到传入的参数对象上
 				promise: function( obj ) {
 					return obj != null ? jQuery.extend( obj, promise ) : promise;
 				}
 			},
+/**********************************************promise---end*************************************************************************/
+
+
+
 			deferred = {};
+
+
+
 
 		// Keep pipe for back-compat
 		promise.pipe = promise.then;
 
 		// Add list-specific methods
 		jQuery.each( tuples, function( i, tuple ) {
-			var list = tuple[ 2 ],
-				stateString = tuple[ 3 ];
+			var list = tuple[ 2 ],// 对应的回调函数
+				stateString = tuple[ 3 ]; // 对应的状态值
 
 			// promise[ done | fail | progress ] = list.add
+			// 就是promise[ done | fail | progress ] 都对应是各自的回调函数的add方法
+			// 此遍历执行结束promise将添加三个方法，当前的promise将成为
+			/*
+					promise = {
+						state: function (){},
+						always: function (){},
+						then: function(){},
+						promise: function(){},
+						pipe: this.then,
+						done: callback.add,
+						file: callback.add,
+						progress: callback.add
+					}
+			 */
 			promise[ tuple[1] ] = list.add;
 
 			// Handle state
@@ -1348,12 +1404,44 @@ jQuery.extend({
 			// deferred[ resolve | reject | notify ] = list.fire
 			deferred[ tuple[0] ] = list.fire;
 			deferred[ tuple[0] + "With" ] = list.fireWith;
+			/*
+				上边两句执行后deferred 将变为
+				deferred = {
+					resolve: callback.fire,
+					resolveWith: callback.fireWith,
+					reject: callback.fire,
+					rejectWith: callback.fireWith,
+					notify: callback.fire,
+					notifyWith: callback.fireWith
+		    	}
+			 */
 		});
 
 		// Make the deferred a promise
 		promise.promise( deferred );
+		/*
+			上边这句话执行后
+			deferred = {
+				resolve: callback.fire,
+				resolveWith: callback.fireWith,
+				reject: callback.fire,
+				rejectWith: callback.fireWith,
+				notify: callback.fire,
+				notifyWith: callback.fireWith,
+				将所有的promise方法拷贝到这个对象上边
+				state: function (){},
+				always: function (){},
+				then: function(){},
+				promise: function(){},
+				pipe: this.then,
+				done: callback.add,
+				file: callback.add,
+				progress: callback.add
+			}
+		 */
 
 		// Call given func if any
+		// 如果调用时传参   $.Deferred(function(deferred){})
 		if ( func ) {
 			func.call( deferred, deferred );
 		}
@@ -1693,6 +1781,7 @@ jQuery.extend({
 
 	// Unique for each copy of jQuery on the page
 	// Non-digits removed to match rinlinejQuery
+	// 是一个唯一值 是静态方法  也就是说不会随着实例化的多少改变，每次打开页面这个值就唯一确定了
 	expando: "jQuery" + ( jQuery.fn.jquery + Math.random() ).replace( /\D/g, "" ),
 
 	// The following elements throw uncatchable exceptions if you
@@ -6334,6 +6423,11 @@ jQuery.buildFragment = function( args, context, scripts ) {
 	}
 
 	if ( !fragment ) {
+		/*
+		createdocumentfragment()方法创建了一虚拟的节点对象，节点对象包含所有属性和方法。
+
+		当你想提取文档的一部分，改变，增加，或删除某些内容及插入到文档末尾可以使用createDocumentFragment() 方法。
+		 */
 		fragment = context.createDocumentFragment();
 		jQuery.clean( args, context, fragment, scripts );
 
